@@ -1,6 +1,10 @@
 package ui.delivery;
 
-import io.qameta.allure.*;
+import io.qameta.allure.Description;
+import io.qameta.allure.Link;
+import io.qameta.allure.Owner;
+import io.qameta.allure.Severity;
+import io.qameta.allure.SeverityLevel;
 import listeners.UIListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -13,7 +17,7 @@ import java.util.List;
 
 import static com.codeborne.selenide.Selenide.open;
 import static io.qameta.allure.Allure.step;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Listeners(UIListener.class)
 public class DeliveryPageTest {
@@ -35,7 +39,9 @@ public class DeliveryPageTest {
         step("Получение условий доставки", () -> {
             List<String> termsOfDelivery = deliveryPage.getTermsOfDelivery();
 
-            assertTrue(termsOfDelivery.contains("Минимальная сумма заказа — 800 рублей"), FailMessages.EXPECTED_STRING_MISSING);
+            assertThat(termsOfDelivery)
+                    .as(FailMessages.EXPECTED_STRING_MISSING)
+                    .contains("Минимальная сумма заказа — 800 рублей");
         });
     }
 

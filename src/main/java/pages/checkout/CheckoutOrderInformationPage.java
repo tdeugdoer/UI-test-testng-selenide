@@ -1,14 +1,12 @@
 package pages.checkout;
 
 import com.codeborne.selenide.SelenideElement;
+import lombok.Getter;
 
 import static com.codeborne.selenide.Selenide.$x;
 
+@Getter
 public class CheckoutOrderInformationPage extends CheckoutBasePage {
-    public final SelenideElement paymentMethod = $x("//li[@class='woocommerce-order-overview__payment-method method']/strong");
-
-    public String getPaymentMethod() {
-        return paymentMethod.getText();
-    }
+    private final SelenideElement paymentMethod = $x("//li[@class='woocommerce-order-overview__payment-method method']/strong");
 
 }

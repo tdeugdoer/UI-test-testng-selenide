@@ -2,10 +2,10 @@ package ui.checkout;
 
 import formData.CheckoutFormData;
 import listeners.UIListener;
+import org.assertj.core.api.SoftAssertions;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-import org.testng.asserts.SoftAssert;
 import pages.auth.LoginPage;
 import pages.cart.CartPage;
 import pages.checkout.CheckoutDataFillingPage;
@@ -18,8 +18,10 @@ import utils.TestConstants;
 import utils.data.CheckoutData;
 import utils.data.LoginData;
 
+import static com.codeborne.selenide.Condition.clickable;
+import static com.codeborne.selenide.Condition.text;
 import static com.codeborne.selenide.Selenide.open;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Listeners(UIListener.class)
 public class CheckoutFillingDataPageTest {
@@ -36,17 +38,17 @@ public class CheckoutFillingDataPageTest {
     public void setUp() {
         open(TestConstants.Urls.MY_ACCOUNT_URL);
         loginPage.fillOutLoginForm(LoginData.EXISTING_EMAIL, LoginData.EXISTING_PASSWORD)
-                .clickLoginButton();
+                .getLoginButton().click();
 
-        mainPage.clickLinkToCart();
+        mainPage.getLinkToCart().shouldBe(clickable).click();
         cartPage.clearCart()
-                .clickMenuPageButton();
+                .getMenuPageButton().click();
 
         menuPage.addToCartFirstProduct()
-                .clickLinkToCart();
+                .getLinkToCart().shouldBe(clickable).click();
 
         cartPage.loadingProductTable();
-        cartPage.clickProceedToPayment();
+        cartPage.getProceedToPaymentButton().shouldBe(clickable).click();
     }
 
     @Test(description = "Установка даты заказа")
@@ -56,31 +58,37 @@ public class CheckoutFillingDataPageTest {
         checkoutDataFillingPage
                 .fillOutOrderDetails(checkoutFormData)
                 .enterOrderDate(tomorrowString)
-                .clickTermsCheckbox()
-                .clickPlaceOrderButton();
+                .getTermsCheckbox().click();
+        checkoutDataFillingPage.getPlaceOrderButton().click();
 
         String title = checkoutOrderInformationPage
-                .tryGetExpectedPostTitle("ЗАКАЗ ПОЛУЧЕН");
+                .getPostTitle().shouldHave(text("ЗАКАЗ ПОЛУЧЕН")).getText();
 
-        assertEquals(title, "ЗАКАЗ ПОЛУЧЕН", FailMessages.STRING_NOT_MATCH_EXPECTED);
+        assertThat(title)
+                .as(FailMessages.STRING_NOT_MATCH_EXPECTED)
+                .isEqualTo("ЗАКАЗ ПОЛУЧЕН");
     }
 
     @Test(description = "Успешное оформление заказа с оплатой наличными")
     public void paymentInCash() {
         checkoutDataFillingPage
                 .fillOutOrderDetails(checkoutFormData)
-                .selectPaymentInCashOnDeliveryRadioButton()
-                .clickTermsCheckbox()
-                .clickPlaceOrderButton();
+                .getPaymentInCashOnDeliveryRadioButton().click();
+        checkoutDataFillingPage.getTermsCheckbox().click();
+        checkoutDataFillingPage.getPlaceOrderButton().click();
 
         String title = checkoutOrderInformationPage
-                .tryGetExpectedPostTitle("ЗАКАЗ ПОЛУЧЕН");
-        String paymentMethod = checkoutOrderInformationPage.getPaymentMethod();
+                .getPostTitle().shouldHave(text("ЗАКАЗ ПОЛУЧЕН")).getText();
+        String paymentMethod = checkoutOrderInformationPage.getPaymentMethod().getText();
 
-        SoftAssert softAssert = new SoftAssert();
-        softAssert.assertEquals(title, "ЗАКАЗ ПОЛУЧЕН", FailMessages.STRING_NOT_MATCH_EXPECTED);
-        softAssert.assertEquals(paymentMethod, "Оплата при доставке", FailMessages.STRING_NOT_MATCH_EXPECTED);
-        softAssert.assertAll();
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(title)
+                    .as(FailMessages.STRING_NOT_MATCH_EXPECTED)
+                    .isEqualTo("ЗАКАЗ ПОЛУЧЕН");
+            softly.assertThat(paymentMethod)
+                    .as(FailMessages.STRING_NOT_MATCH_EXPECTED)
+                    .isEqualTo("Оплата при доставке");
+        });
     }
 
     private CheckoutFormData getCheckoutFormData() {

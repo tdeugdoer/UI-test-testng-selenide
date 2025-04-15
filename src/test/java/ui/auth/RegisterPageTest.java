@@ -11,7 +11,7 @@ import utils.TestConstants;
 import utils.data.RegisterData;
 
 import static com.codeborne.selenide.Selenide.open;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Listeners(UIListener.class)
 public class RegisterPageTest {
@@ -31,40 +31,46 @@ public class RegisterPageTest {
 
     @Test(description = "Пользователь успешно регистрируется при вводе валидных значений")
     public void successRegister() {
-        String message = registerPage
+        registerPage
                 .fillOutRegisterForm(username, email, password)
-                .clickRegisterButton()
-                .getSuccessRegisterMessage();
+                .getRegisterButton().click();
+        String message = registerPage.getSuccessRegisterMessage().getText();
 
-        assertEquals(message, "Регистрация завершена", FailMessages.STRING_NOT_MATCH_EXPECTED);
+        assertThat(message)
+                .as(FailMessages.STRING_NOT_MATCH_EXPECTED)
+                .isEqualTo("Регистрация завершена");
     }
 
     @Test(description = "Пользователь пытается создать уже существующий аккаунт и получает ошибку")
     public void repeatRegister() {
         registerPage
                 .fillOutRegisterForm(username, email, password)
-                .clickRegisterButton()
-                .clickLogoutButton();
+                .getRegisterButton().click();
+        registerPage.getLogoutButton().click();
 
         open(TestConstants.Urls.REGISTER_URL);
-        String message = registerPage
+        registerPage
                 .fillOutRegisterForm(username, email, password)
-                .clickRegisterButton()
-                .getErrorMessage();
+                .getRegisterButton().click();
+        String message = registerPage.getErrorMessage().getText();
 
-        assertEquals(message, "Error: Учетная запись с такой почтой уже зарегистировавана. Пожалуйста авторизуйтесь.", FailMessages.STRING_NOT_MATCH_EXPECTED);
+        assertThat(message)
+                .as(FailMessages.STRING_NOT_MATCH_EXPECTED)
+                .isEqualTo("Error: Учетная запись с такой почтой уже зарегистировавана. Пожалуйста авторизуйтесь.");
     }
 
     @Test(description = "Пользователь пытается зарегистрироваться, не вводя пароль и получает ошибку")
     public void missingPasswordRegister() {
         String password = RegisterData.EMPTY_PASSWORD;
 
-        String message = registerPage
+        registerPage
                 .fillOutRegisterForm(username, email, password)
-                .clickRegisterButton()
-                .getErrorMessage();
+                .getRegisterButton().click();
+        String message = registerPage.getErrorMessage().getText();
 
-        assertEquals(message, "Error: Введите пароль для регистрации.", FailMessages.STRING_NOT_MATCH_EXPECTED);
+        assertThat(message)
+                .as(FailMessages.STRING_NOT_MATCH_EXPECTED)
+                .isEqualTo("Error: Введите пароль для регистрации.");
     }
 
 }

@@ -2,11 +2,14 @@ package pages;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import lombok.Getter;
 
-import static com.codeborne.selenide.Condition.clickable;
 import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selenide.*;
+import static com.codeborne.selenide.Selenide.$$x;
+import static com.codeborne.selenide.Selenide.$x;
+import static com.codeborne.selenide.Selenide.executeJavaScript;
 
+@Getter
 public abstract class BasePage {
     private final SelenideElement logoutButton = $x("//a[@class='logout']");
     private final SelenideElement menuPageButton = $x("//li[contains(@class, 'menu-item menu-item-type-taxonomy menu-item-object-product_cat menu-item-has-children')]/a");
@@ -27,48 +30,22 @@ public abstract class BasePage {
                 .replace("₽", ""));
     }
 
-    public void clickLogoutButton() {
-        logoutButton.click();
-    }
-
-    public void clickMenuPageButton() {
-        menuPageButton.click();
-    }
-
-    public void clickAccountPageButton() {
-        accountPageButton.click();
-    }
-
-    public void clickPromoPageButton() {
-        promoPageButton.click();
+    protected void enterField(SelenideElement inputField, String value) {
+        inputField.clear();
+        inputField.sendKeys(value);
     }
 
     public void clickMenuCategoryButton(String category) {
-        actions()
-                .moveToElement(menuPageButton)
-                .pause(500)
-                .perform();
+        menuPageButton.hover();
         menuCategoryButtons.stream()
                 .filter(button -> button.getText().equalsIgnoreCase(category))
                 .findFirst()
                 .ifPresent(SelenideElement::click);
     }
 
-    public void clickLinkToCart() {
-        linkToCart.shouldBe(clickable).click();
-    }
-
     public Boolean isTopScrollArrowVisible() {
         executeJavaScript("window.scrollBy(0,100)");
         return topScrollArrow.shouldBe(visible).isDisplayed();
-    }
-
-    public void scrollPage(Integer shift) {
-        executeJavaScript(String.format("window.scrollBy(0,%d)", shift));
-    }
-
-    public void clickInstagramButton() {
-        instagramButton.click();
     }
 
 }

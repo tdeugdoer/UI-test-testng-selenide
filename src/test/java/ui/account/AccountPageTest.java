@@ -5,22 +5,25 @@ import listeners.UIListener;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-import pages.account.*;
+import pages.account.AccountBasePage;
+import pages.account.AccountEditPage;
+import pages.account.AccountInformationPage;
+import pages.account.AccountOrdersPage;
+import pages.account.AccountViewOrderPage;
 import pages.auth.LoginPage;
 import pages.cart.CartPage;
 import pages.checkout.CheckoutDataFillingPage;
 import pages.main.MainPage;
 import pages.menu.MenuPage;
-import utils.FailMessages;
 import utils.FileDownloader;
 import utils.StringGenerator;
 import utils.TestConstants;
 import utils.data.CheckoutData;
 import utils.data.LoginData;
 
+import static com.codeborne.selenide.Condition.clickable;
 import static com.codeborne.selenide.Selenide.open;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Listeners(UIListener.class)
 public class AccountPageTest {
@@ -40,42 +43,46 @@ public class AccountPageTest {
     public void setUp() {
         open(TestConstants.Urls.MY_ACCOUNT_URL);
         loginPage.fillOutLoginForm(LoginData.EXISTING_EMAIL, LoginData.EXISTING_PASSWORD)
-                .clickLoginButton();
+                .getLoginButton().click();
     }
 
     @Test(description = "Загрузка файла")
     public void changeAccountImage() {
-        accountBasePage.clickEditAccountLink();
-        accountEditPage.inputFile(FileDownloader.downloadFileToTemp("https://yt3.googleusercontent.com/ytc/AIdro_ljFZmd80sh4pvzQENH22j-J9HBKD1_hFa8hp2ga9DgtN4=s900-c-k-c0x00ffffff-no-rj",
-                        "Profile", ".png").toString())
-                .clickSaveAccountDetailsButton();
-        String message = accountInformationPage.getMessage();
+        accountBasePage.getEditAccountLink().click();
+        accountEditPage.getUploadFileInput().sendKeys(FileDownloader.downloadFileToTemp("https://yt3.googleusercontent.com/ytc/AIdro_ljFZmd80sh4pvzQENH22j-J9HBKD1_hFa8hp2ga9DgtN4=s900-c-k-c0x00ffffff-no-rj",
+                "Profile", ".png"));
+        accountEditPage.getSaveAccountDetailsButton().click();
+        String message = accountInformationPage.getMessage().getText();
 
-        assertEquals(message, "Account details changed successfully.", FailMessages.STRING_NOT_MATCH_EXPECTED);
+        assertThat(message)
+                .as("Проверка сообщения об успешном изменении данных")
+                .isEqualTo("Account details changed successfully.");
     }
 
     @Test(description = "Создание заказа и проверка его появления в заказах на странице пользователя")
     public void checkAddingOrder() {
         CheckoutFormData checkoutFormData = getCheckoutFormData();
 
-        mainPage.clickMenuPageButton();
+        mainPage.getMenuPageButton().click();
 
         menuPage.addToCartFirstProduct()
-                .clickLinkToCart();
+                .getLinkToCart().shouldBe(clickable).click();
 
         cartPage.loadingProductTable();
-        cartPage.clickProceedToPayment();
+        cartPage.getProceedToPaymentButton().shouldBe(clickable).click();
 
         checkoutDataFillingPage.fillOutOrderDetails(checkoutFormData)
-                .clickTermsCheckbox()
-                .clickPlaceOrderButton()
-                .clickAccountPageButton();
+                .getTermsCheckbox().click();
+        checkoutDataFillingPage.getPlaceOrderButton().click();
+        checkoutDataFillingPage.getAccountPageButton().click();
 
-        accountBasePage.clickOrdersAccountLink();
-        accountOrdersPage.clickFirstOrder();
-        String customerDetails = accountViewOrderPage.getCustomerDetails();
+        accountBasePage.getOrdersAccountLink().click();
+        accountOrdersPage.redirectToFirstOrder();
+        String customerDetails = accountViewOrderPage.getCustomerDetails().getText();
 
-        assertTrue(customerDetails.contains(checkoutFormData.getFirstName()), FailMessages.STRING_NOT_HAS_EXPECTED);
+        assertThat(customerDetails)
+                .as("Проверка, что детали заказа содержат имя пользователя")
+                .contains(checkoutFormData.getFirstName());
     }
 
     private CheckoutFormData getCheckoutFormData() {

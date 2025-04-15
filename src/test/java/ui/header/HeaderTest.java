@@ -10,7 +10,7 @@ import pages.menu.MenuPage;
 import utils.FailMessages;
 
 import static com.codeborne.selenide.Selenide.open;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Listeners(UIListener.class)
 public class HeaderTest {
@@ -31,9 +31,11 @@ public class HeaderTest {
     @Test(dataProvider = "provideCategories")
     public void menuCategories(String category) {
         mainPage.clickMenuCategoryButton(category);
-        String title = menuPage.getTitle();
+        String title = menuPage.getTitle().getText();
 
-        assertEquals(category.toLowerCase(), title.toLowerCase(), FailMessages.STRING_NOT_MATCH_EXPECTED);
+        assertThat(category)
+                .as(FailMessages.STRING_NOT_MATCH_EXPECTED)
+                .isEqualToIgnoringCase(title);
     }
 
     @DataProvider(name = "provideCategories")

@@ -2,12 +2,13 @@ package pages.checkout;
 
 import com.codeborne.selenide.SelenideElement;
 import formData.CheckoutFormData;
-import org.openqa.selenium.WebElement;
+import lombok.Getter;
 
 import static com.codeborne.selenide.Selenide.$x;
 
+@Getter
 public class CheckoutDataFillingPage extends CheckoutBasePage {
-    public final SelenideElement
+    private final SelenideElement
             firstNameInput = $x("//input[@id='billing_first_name']"),
             lastNameInput = $x("//input[@id='billing_last_name']"),
             countrySelect = $x("//select[@id='billing_country']"),
@@ -24,7 +25,7 @@ public class CheckoutDataFillingPage extends CheckoutBasePage {
     public CheckoutDataFillingPage fillOutOrderDetails(CheckoutFormData formData) {
         enterField(firstNameInput, formData.getFirstName());
         enterField(lastNameInput, formData.getLastName());
-        selectCountry(formData.getCountry());
+        countrySelect.selectOption(formData.getCountry());
         enterField(addressInput, formData.getAddress());
         enterField(cityInput, formData.getCity());
         enterField(stateInput, formData.getState());
@@ -33,33 +34,8 @@ public class CheckoutDataFillingPage extends CheckoutBasePage {
         return this;
     }
 
-    private void enterField(WebElement inputField, String value) {
-        inputField.clear();
-        inputField.sendKeys(value);
-    }
-
-    public void selectCountry(String country) {
-        countrySelect.selectOption(country);
-    }
-
     public CheckoutDataFillingPage enterOrderDate(String orderDate) {
-        orderDateInput.clear();
-        orderDateInput.sendKeys(orderDate);
-        return this;
-    }
-
-    public CheckoutDataFillingPage selectPaymentInCashOnDeliveryRadioButton() {
-        paymentInCashOnDeliveryRadioButton.click();
-        return this;
-    }
-
-    public CheckoutDataFillingPage clickTermsCheckbox() {
-        termsCheckbox.click();
-        return this;
-    }
-
-    public CheckoutDataFillingPage clickPlaceOrderButton() {
-        placeOrderButton.click();
+        enterField(orderDateInput, orderDate);
         return this;
     }
 

@@ -12,12 +12,12 @@ import java.nio.file.StandardCopyOption;
 
 @UtilityClass
 public class FileDownloader {
-    public Path downloadFileToTemp(String fileUrl, String prefix, String suffix) {
+    public String downloadFileToTemp(String fileUrl, String prefix, String suffix) {
         try (InputStream in = URI.create(fileUrl).toURL().openStream()) {
             Path tempFile = Files.createTempFile(prefix, suffix);
             Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
             tempFile.toFile().deleteOnExit();
-            return tempFile;
+            return tempFile.toString();
         } catch (IOException e) {
             throw new UncheckedIOException(ExceptionMessages.FILE_DOWNLOAD, e);
         }

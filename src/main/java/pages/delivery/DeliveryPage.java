@@ -7,11 +7,13 @@ import pages.BasePage;
 
 import java.util.List;
 
-import static com.codeborne.selenide.Selenide.*;
+import static com.codeborne.selenide.Selenide.$$x;
+import static com.codeborne.selenide.Selenide.$x;
+import static com.codeborne.selenide.Selenide.switchTo;
 
 public class DeliveryPage extends BasePage {
-    public final SelenideElement termsOfDeliveryIframe = $x("//iframe[contains(@src,'delivery.html')]");
-    public final ElementsCollection termsOfDeliveryUl = $$x("//ul");
+    private final SelenideElement termsOfDeliveryIframe = $x("//iframe[contains(@src,'delivery.html')]");
+    private final ElementsCollection termsOfDeliveryUl = $$x("//ul");
 
     public List<String> getTermsOfDelivery() {
         switchTo().frame(termsOfDeliveryIframe);

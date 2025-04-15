@@ -2,41 +2,35 @@ package pages.menu;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import lombok.Getter;
 import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.json.JsonException;
 import pages.BasePage;
 import utils.Constants;
 
 import java.util.List;
 
-import static com.codeborne.selenide.Selenide.*;
+import static com.codeborne.selenide.Selenide.$$x;
+import static com.codeborne.selenide.Selenide.$x;
+import static com.codeborne.selenide.Selenide.actions;
 
+@Getter
 public class MenuPage extends BasePage {
-    public final ElementsCollection menuCardsPrices = $$x("//div[@class='price-cart']/descendant::bdi");
-    public final ElementsCollection addToCartButtons = $$x("//a[@class='button product_type_simple add_to_cart_button ajax_add_to_cart']");
-    public final SelenideElement minPriceSlider = $x("//span[contains(@class, 'ui-slider-handle ui-state-default ui-corner-all')][1]");
-    public final SelenideElement maxPriceSlider = $x("//span[contains(@class, 'ui-slider-handle ui-state-default ui-corner-all')][2]");
-    public final SelenideElement minPriceValue = $x("//span[@class='from']");
-    public final SelenideElement maxPriceValue = $x("//span[@class='to']");
-    public final SelenideElement priceFilteringButton = $x("//div[@class='price_slider_amount']/button[@type='submit']");
-    public final SelenideElement priceAscOrderingOption = $x("//option[@value='price']");
-    public final SelenideElement title = $x("//h1[@class='entry-title ak-container']");
+    private final ElementsCollection menuCardsPrices = $$x("//div[@class='price-cart']/descendant::bdi");
+    private final ElementsCollection addToCartButtons = $$x("//a[@class='button product_type_simple add_to_cart_button ajax_add_to_cart']");
+    private final SelenideElement minPriceSlider = $x("//span[contains(@class, 'ui-slider-handle ui-state-default ui-corner-all')][1]");
+    private final SelenideElement maxPriceSlider = $x("//span[contains(@class, 'ui-slider-handle ui-state-default ui-corner-all')][2]");
+    private final SelenideElement minPriceValue = $x("//span[@class='from']");
+    private final SelenideElement maxPriceValue = $x("//span[@class='to']");
+    private final SelenideElement priceFilteringButton = $x("//div[@class='price_slider_amount']/button[@type='submit']");
+    private final SelenideElement priceAscOrderingOption = $x("//option[@value='price']");
+    private final SelenideElement title = $x("//h1[@class='entry-title ak-container']");
 
     public List<Float> getMenuCardsPrices() {
         return menuCardsPrices.stream()
-                .map(WebElement::getText)
+                .map(SelenideElement::getText)
                 .map(this::parseFloatPriceValue)
                 .toList();
-    }
-
-    public String getTitle() {
-        return title.getText();
-    }
-
-    public MenuPage clickPriceFilteringButton() {
-        priceFilteringButton.click();
-        return this;
     }
 
     public MenuPage addToCartFirstProduct() {
@@ -44,11 +38,6 @@ public class MenuPage extends BasePage {
             addToCartButtons.first().click();
         } else throw new IllegalStateException(Constants.ExceptionMessage.UNABLE_ADD_TO_CART_ERROR);
 
-        return this;
-    }
-
-    public MenuPage sortMenuByAscPrice() {
-        priceAscOrderingOption.click();
         return this;
     }
 
@@ -76,19 +65,19 @@ public class MenuPage extends BasePage {
         return this;
     }
 
-    private void increasePriceValueToValue(WebElement slider, WebElement priceValue, Integer newValue) {
+    private void increasePriceValueToValue(SelenideElement slider, SelenideElement priceValue, Integer newValue) {
         while (!parseIntPriceValue(priceValue.getText()).equals(newValue)) {
             moveRightSlider(slider);
         }
     }
 
-    private void reducePriceValueToValue(WebElement slider, WebElement priceValue, Integer newValue) {
+    private void reducePriceValueToValue(SelenideElement slider, SelenideElement priceValue, Integer newValue) {
         while (!parseIntPriceValue(priceValue.getText()).equals(newValue)) {
             moveLeftSlider(slider);
         }
     }
 
-    private void moveRightSlider(WebElement slider) {
+    private void moveRightSlider(SelenideElement slider) {
         try {
             actions()
                     .dragAndDropBy(slider, 1, 0)
@@ -98,7 +87,7 @@ public class MenuPage extends BasePage {
         }
     }
 
-    private void moveLeftSlider(WebElement slider) {
+    private void moveLeftSlider(SelenideElement slider) {
         try {
             actions()
                     .clickAndHold(slider)
@@ -108,7 +97,6 @@ public class MenuPage extends BasePage {
         } catch (JsonException e) {
             throw new IllegalStateException(Constants.ExceptionMessage.SLIDER_OUT_OF_BOUNDS_ERROR);
         }
-
     }
 
 }

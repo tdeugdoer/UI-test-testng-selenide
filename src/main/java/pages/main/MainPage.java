@@ -2,16 +2,20 @@ package pages.main;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
+import lombok.Getter;
 import org.openqa.selenium.Keys;
 import pages.BasePage;
-import utils.Constants;
+import utils.CustomAwait;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-import static com.codeborne.selenide.Selenide.*;
+import static com.codeborne.selenide.Selenide.$$x;
+import static com.codeborne.selenide.Selenide.$x;
+import static com.codeborne.selenide.Selenide.actions;
 
+@Getter
 public class MainPage extends BasePage {
     private final SelenideElement
             pizzaSliderUl = $x("//h2[@class='prod-title' and contains(text(), 'Пицца')]/ancestor::aside/ul[@class='new-prod-slide remove-overload slick-initialized slick-slider']"),
@@ -24,16 +28,18 @@ public class MainPage extends BasePage {
 
     public MainPage slideLeftPizzaSlider(Integer times) {
         IntStream.range(0, times).forEach(i -> {
-            prevPizzaSlick.click();
-            sleep(1000);
+            List<SelenideElement> initialItems = getVisiblePizzaInSlider();
+            prevPizzaSlick.hover().click();
+            waitingChangedVisibleItems(initialItems);
         });
         return this;
     }
 
     public MainPage slideRightPizzaSlider(Integer times) {
         IntStream.range(0, times).forEach(i -> {
-            nextPizzaSlick.click();
-            sleep(1000);
+            List<SelenideElement> initialItems = getVisiblePizzaInSlider();
+            nextPizzaSlick.hover().click();
+            waitingChangedVisibleItems(initialItems);
         });
         return this;
     }
@@ -41,8 +47,9 @@ public class MainPage extends BasePage {
     public MainPage slidePizzaSlider(Integer times, Keys keys) {
         pizzaSliderUl.click();
         IntStream.range(0, times).forEach(i -> {
+            List<SelenideElement> initialItems = getVisiblePizzaInSlider();
             actions().sendKeys(keys).perform();
-            sleep(Constants.DEFAULT_EXPLICIT_WAITING.toMillis());
+            waitingChangedVisibleItems(initialItems);
         });
         return this;
     }
@@ -60,9 +67,7 @@ public class MainPage extends BasePage {
     }
 
     public MainPage moveToFirstDrinkImage() {
-        actions()
-                .moveToElement(drinkImages.first())
-                .perform();
+        drinkImages.first().hover();
         return this;
     }
 
@@ -70,8 +75,13 @@ public class MainPage extends BasePage {
         return dessertPageLinks.first().getAttribute("title");
     }
 
-    public void clickFirstDesertPageLink() {
+    public void redirectToFirstDesert() {
         dessertPageLinks.first().click();
+    }
+
+    private void waitingChangedVisibleItems(List<SelenideElement> initialItems) {
+        CustomAwait.await("Ждём изменения отображаемых элементов в слайдере")
+                .until(() -> !getVisiblePizzaInSlider().equals(initialItems));
     }
 
 }

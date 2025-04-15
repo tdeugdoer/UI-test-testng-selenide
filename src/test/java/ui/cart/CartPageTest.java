@@ -19,10 +19,11 @@ import utils.FailMessages;
 import utils.TestConstants;
 import utils.data.LoginData;
 
+import static com.codeborne.selenide.Condition.clickable;
+import static com.codeborne.selenide.Condition.interactable;
 import static com.codeborne.selenide.Selenide.open;
 import static io.qameta.allure.Allure.step;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Listeners(UIListener.class)
 public class CartPageTest {
@@ -38,14 +39,16 @@ public class CartPageTest {
         step("Аутентификация", () -> {
             open(TestConstants.Urls.MY_ACCOUNT_URL);
             loginPage.fillOutLoginForm(LoginData.EXISTING_EMAIL, LoginData.EXISTING_PASSWORD)
-                    .clickLoginButton();
+                    .getLoginButton().click();
         });
-        step("Переходим в корзину", mainPage::clickLinkToCart);
+        step("Переходим в корзину", () ->
+                mainPage.getLinkToCart().shouldBe(clickable).click()
+        );
         step("Очищаем корзину и переходим на страницу меню", () ->
-                cartPage.clearCart().clickMenuPageButton()
+                cartPage.clearCart().getMenuPageButton().click()
         );
         step("Добавление продукта в корзину и переход в неё", () ->
-                menuPage.addToCartFirstProduct().clickLinkToCart()
+                menuPage.addToCartFirstProduct().getLinkToCart().shouldBe(clickable).click()
         );
         step("Удаления имеющихся купонов", () -> {
             cartPage.loadingProductTable();
@@ -66,12 +69,14 @@ public class CartPageTest {
     @Owner("Yahor Tserashkevich")
     @Link(name = "Website", url = "https://pizzeria.skillbox.cc/cart/")
     public void changeProductQuantity() {
-        step("", () -> {
+        step("Увеличение количества первого продукта в корзине на один", () -> {
             Integer beforeQuantity = cartPage.getFirstProductQuantity();
-            cartPage.setFirstProductQuantity(beforeQuantity + 1);
+            cartPage.enterFirstProductQuantity(beforeQuantity + 1);
             Integer afterQuantity = cartPage.getFirstProductQuantity();
 
-            assertEquals(afterQuantity, beforeQuantity + 1, FailMessages.NUMBER_NOT_MATCH_EXPECTED);
+            assertThat(afterQuantity)
+                    .as(FailMessages.NUMBER_NOT_MATCH_EXPECTED)
+                    .isEqualTo(beforeQuantity + 1);
         });
     }
 
@@ -82,12 +87,14 @@ public class CartPageTest {
     public void updateAfterChanges() {
         step("Обновления количество продуктов в корзине", () -> {
             Integer beforeTotalCartAmount = cartPage.getFirstProductQuantity();
-            cartPage.setFirstProductQuantity(cartPage.getFirstProductQuantity() + 1)
-                    .clickUpdateCartButton()
-                    .getTotalCartAmount();
+            cartPage.enterFirstProductQuantity(cartPage.getFirstProductQuantity() + 1)
+                    .getUpdateCartButton().click();
+            cartPage.getTotalCartAmount();
             Integer afterTotalCartAmount = cartPage.getFirstProductQuantity();
 
-            assertTrue(afterTotalCartAmount > beforeTotalCartAmount, FailMessages.PRICE_SHOULD_INCREASE);
+            assertThat(afterTotalCartAmount)
+                    .as(FailMessages.PRICE_SHOULD_INCREASE)
+                    .isGreaterThan(beforeTotalCartAmount);
         });
     }
 
@@ -97,10 +104,12 @@ public class CartPageTest {
     @Link(name = "Website", url = "https://pizzeria.skillbox.cc/cart/")
     public void proceedToCheckoutForLoggedInUser() {
         step("Переход к оплате заказа", () -> {
-            cartPage.clickProceedToPayment();
-            String message = checkoutBasePage.getPostTitle();
+            cartPage.getProceedToPaymentButton().shouldBe(clickable).click();
+            String message = checkoutBasePage.getPostTitle().getText();
 
-            assertEquals(message, "ОФОРМЛЕНИЕ ЗАКАЗА", FailMessages.STRING_NOT_MATCH_EXPECTED);
+            assertThat(message)
+                    .as(FailMessages.STRING_NOT_MATCH_EXPECTED)
+                    .isEqualTo("ОФОРМЛЕНИЕ ЗАКАЗА");
         });
     }
 
@@ -110,18 +119,20 @@ public class CartPageTest {
     @Link(name = "Website", url = "https://pizzeria.skillbox.cc/cart/")
     public void applyPromoCodeFromSalesSection() {
         step("Получение и применение промокода", () -> {
-            cartPage.clickPromoPageButton();
+            cartPage.getPromoPageButton().click();
 
-            String coupon = promoPage.getFirstCoupon();
-            promoPage.clickLinkToCart();
+            String coupon = promoPage.getFirstCoupon().getText();
+            promoPage.getLinkToCart().shouldBe(clickable).click();
 
             Float beforeTotalCartAmount = cartPage.getTotalCartAmount();
             cartPage
-                    .setCouponCode(coupon)
-                    .clickApplyCouponButton();
+                    .enterCouponCode(coupon)
+                    .getApplyCouponButton().shouldBe(interactable).click();
             Float afterTotalCartAmount = cartPage.getTotalCartAmount();
 
-            assertTrue(afterTotalCartAmount < beforeTotalCartAmount, FailMessages.PRICE_SHOULD_DECREASE);
+            assertThat(afterTotalCartAmount)
+                    .as(FailMessages.PRICE_SHOULD_DECREASE)
+                    .isLessThan(beforeTotalCartAmount);
         });
     }
 

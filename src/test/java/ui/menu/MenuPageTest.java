@@ -1,10 +1,10 @@
 package ui.menu;
 
 import listeners.UIListener;
+import org.assertj.core.api.SoftAssertions;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
-import org.testng.asserts.SoftAssert;
 import pages.cart.CartPage;
 import pages.menu.MenuPage;
 import utils.FailMessages;
@@ -12,9 +12,9 @@ import utils.TestConstants;
 
 import java.util.List;
 
+import static com.codeborne.selenide.Condition.clickable;
 import static com.codeborne.selenide.Selenide.open;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Listeners(UIListener.class)
 public class MenuPageTest {
@@ -28,14 +28,16 @@ public class MenuPageTest {
 
     @Test(description = "Применение сортировки пицц")
     public void sorting() {
-        menuPage.sortMenuByAscPrice();
+        menuPage.getPriceAscOrderingOption().click();
 
         List<Float> menuCardsPrices = menuPage.getMenuCardsPrices();
         List<Float> sortedCardsPrices = menuCardsPrices.stream()
                 .sorted()
                 .toList();
 
-        assertEquals(menuCardsPrices, sortedCardsPrices, FailMessages.MENU_NOT_SORTED_BY_PRICE_ASC);
+        assertThat(menuCardsPrices)
+                .as(FailMessages.MENU_NOT_SORTED_BY_PRICE_ASC)
+                .isEqualTo(sortedCardsPrices);
     }
 
     @Test(description = "Фильтрация пицц по цене")
@@ -43,27 +45,31 @@ public class MenuPageTest {
         Integer expectedMinPrice = 300;
         Integer expectedMaxPrice = 480;
 
-        List<Float> menuCardsPrices = menuPage
+        menuPage
                 .changeMinPrice(expectedMinPrice)
                 .changeMaxPrice(expectedMaxPrice)
-                .clickPriceFilteringButton()
-                .getMenuCardsPrices();
+                .getPriceFilteringButton().click();
+        List<Float> menuCardsPrices = menuPage.getMenuCardsPrices();
 
-        SoftAssert softAssert = new SoftAssert();
-        softAssert.assertTrue(menuCardsPrices.stream()
-                .allMatch(price -> price >= expectedMinPrice), FailMessages.MENU_NOT_FILTERED_BY_MIN_PRICE);
-        softAssert.assertTrue(menuCardsPrices.stream()
-                .allMatch(price -> price <= expectedMaxPrice), FailMessages.MENU_NOT_FILTERED_BY_MAX_PRICE);
-        softAssert.assertAll();
+        SoftAssertions.assertSoftly(softly -> {
+            softly.assertThat(menuCardsPrices)
+                    .as(FailMessages.MENU_NOT_FILTERED_BY_MIN_PRICE)
+                    .allMatch(price -> price >= expectedMinPrice);
+            softly.assertThat(menuCardsPrices)
+                    .as(FailMessages.MENU_NOT_FILTERED_BY_MAX_PRICE)
+                    .allMatch(price -> price <= expectedMaxPrice);
+        });
     }
 
     @Test(description = "Добавление пиццы в корзину")
     public void additionToCart() {
         menuPage.addToCartFirstProduct()
-                .clickLinkToCart();
+                .getLinkToCart().shouldBe(clickable).click();
         Boolean cartExist = cartPage.loadingProductTable();
 
-        assertTrue(cartExist, FailMessages.ELEMENT_NOT_EXIST);
+        assertThat(cartExist)
+                .as(FailMessages.ELEMENT_NOT_EXIST)
+                .isTrue();
     }
 
 }

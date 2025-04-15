@@ -1,53 +1,59 @@
 package pages.cart;
 
 import com.codeborne.selenide.ElementsCollection;
-import com.codeborne.selenide.Selenide;
 import com.codeborne.selenide.SelenideElement;
+import lombok.Getter;
+import org.awaitility.core.ConditionTimeoutException;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import pages.BasePage;
+import utils.CustomAwait;
 
-import java.time.Duration;
 import java.util.Objects;
 
-import static com.codeborne.selenide.Condition.clickable;
+import static com.codeborne.selenide.Condition.empty;
 import static com.codeborne.selenide.Condition.interactable;
-import static com.codeborne.selenide.Selenide.*;
+import static com.codeborne.selenide.Selenide.$$x;
+import static com.codeborne.selenide.Selenide.$x;
+import static com.codeborne.selenide.Selenide.refresh;
 
+@Getter
 public class CartPage extends BasePage {
-    public final SelenideElement
+    private final SelenideElement
             productTable = $x("//table[contains(@class,'shop_table')]"),
             updateCartButton = $x("//button[@name='update_cart']"),
             totalCartAmount = $x("//tr[@class='order-total']//span[contains(@class,'amount')]"),
             proceedToPaymentButton = $x("//a[contains(@class,'checkout-button')]"),
             couponCodeInput = $x("//input[@id='coupon_code']"),
             applyCouponButton = $x("//button[@name='apply_coupon']");
-    public final ElementsCollection
+    private final ElementsCollection
             removeButtons = $$x("//a[@class='remove']"),
             quantityInputs = $$x("//div[@class='quantity']//input"),
             removeCouponButtons = $$x("//a[contains(@class,'remove-coupon')]");
 
 
     public Integer getFirstProductQuantity() {
-        actions().pause(Duration.ofSeconds(1)).perform();
         return Integer.valueOf(Objects.requireNonNull(quantityInputs.first().getDomProperty("value")));
     }
 
-    public CartPage setFirstProductQuantity(Integer quantity) {
-        quantityInputs.first().clear();
-        quantityInputs.first().sendKeys(String.valueOf(quantity));
+    public CartPage enterFirstProductQuantity(Integer quantity) {
+        SelenideElement firstQuantityInput = quantityInputs.first();
+        CustomAwait.await("Ожидание очистки input number")
+                .until(() -> {
+                    firstQuantityInput.clear();
+                    return firstQuantityInput.is(empty);
+                });
+        firstQuantityInput.sendKeys(String.valueOf(quantity));
         return this;
     }
 
     public Float getTotalCartAmount() {
-        actions().pause(Duration.ofSeconds(1)).perform();
         return parseFloatPriceValue(totalCartAmount.getText());
     }
 
-    public CartPage setCouponCode(String couponCode) {
-        couponCodeInput.clear();
-        couponCodeInput.sendKeys(couponCode);
+    public CartPage enterCouponCode(String couponCode) {
+        enterField(couponCodeInput, couponCode);
         couponCodeInput.sendKeys(Keys.ENTER);
         return this;
     }
@@ -60,26 +66,20 @@ public class CartPage extends BasePage {
         return this;
     }
 
-    public CartPage clickUpdateCartButton() {
-        updateCartButton.click();
-        return this;
-    }
-
-    public CartPage clickApplyCouponButton() {
-        applyCouponButton.shouldBe(interactable).click();
-        return this;
-    }
-
-    public void clickProceedToPayment() {
-        proceedToPaymentButton.shouldBe(clickable).click();
-    }
-
     public Boolean loadingProductTable() {
-        return Selenide.Wait()
-                .until(d -> {
-                    refresh();
-                    return productTable.isDisplayed();
-                });
+        try {
+            CustomAwait.await("Ждем отображения корзины")
+                    .until(() -> {
+                        if (productTable.isDisplayed()) {
+                            return true;
+                        }
+                        refresh();
+                        return false;
+                    });
+            return true;
+        } catch (ConditionTimeoutException e) {
+            return false;
+        }
     }
 
     public CartPage clearCart() {
